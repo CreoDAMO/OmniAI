@@ -1,6 +1,6 @@
 # OmniAI: AI-Powered XR and Cloud Gaming Platform
 
-OmniAI is a full-stack platform for building, deploying, and managing XR (VR/AR/MR) and cloud gaming applications. It integrates **NVIDIA SDKs** (GeForce NOW, CloudXR, DLSS 4), **GitHub SDK**, **Vercel SDK**, and the **Vercel AI SDK** for AI-driven configuration, automated deployments, and high-performance rendering. The platform supports Unity 2022.3+, Unreal Engine 5.0+, and web frameworks like Next.js and Svelte.
+OmniAI is a full-stack platform for building, deploying, and managing XR (VR/AR/MR) and cloud gaming applications. It features a **React/TypeScript frontend**, **Python FastAPI backend**, and **enhanced Rust middleware** for security, caching, and performance optimization. The platform integrates **NVIDIA SDKs** (GeForce NOW, CloudXR, DLSS 4), **GitHub SDK**, **Vercel SDK**, and provides seamless deployment on Replit.
 
 ## Features
 
@@ -15,43 +15,69 @@ OmniAI is a full-stack platform for building, deploying, and managing XR (VR/AR/
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │◄──►│   Backend       │◄──►│   Security      │
-│   (React/TSX)   │    │   (FastAPI)     │    │   (Rust)        │
+│   Frontend      │◄──►│   Middleware    │◄──►│   Backend       │
+│ React/TypeScript│    │     (Rust)      │    │   (FastAPI)     │
+│   Vite + UI     │    │ Auth/Cache/Sec  │    │  NVIDIA/GitHub  │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          ▼                       ▼                       ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   NVIDIA SDKs   │    │   AI Services   │    │   Databases     │
-│   GFN/CloudXR   │    │   Vercel AI SDK │    │   Redis/Postgres│
-│   DLSS 4        │    │   Llama/OpenAI  │    │   Pinecone      │
+│   Components    │    │   Services      │    │   Integrations  │
+│ Dashboard/NVIDIA│    │ Rate Limiting   │    │ GitHub/Vercel   │
+│ GitHub/Vercel   │    │ Validation      │    │ NVIDIA SDKs     │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   GitHub SDK    │    │   Vercel SDK    │    │   Deployment    │
-│   (@octokit)    │    │   (@vercel)     │    │   (Kubernetes)  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+## Project Structure
+
+```
+omni-ai/
+├── frontend/                 # React/TypeScript frontend
+│   ├── src/
+│   │   ├── components/      # UI components
+│   │   │   ├── ui/         # Base UI components
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── GitHubIntegration.tsx
+│   │   │   ├── VercelIntegration.tsx
+│   │   │   ├── NVIDIAPanel.tsx
+│   │   │   └── DeploymentPanel.tsx
+│   │   ├── lib/            # Utilities
+│   │   ├── state/          # Recoil state management
+│   │   └── theme.ts        # Mantine theme
+│   ├── package.json
+│   └── vite.config.ts
+├── backend/                 # Python FastAPI backend
+│   └── core/
+│       ├── routes/         # API routes
+│       ├── config.py       # Configuration
+│       └── nvidia_integration.py
+├── middleware/              # Rust middleware
+│   ├── src/
+│   │   ├── main.rs        # Main server
+│   │   ├── auth.rs        # Authentication
+│   │   ├── cache.rs       # Caching layer
+│   │   ├── security.rs    # Security middleware
+│   │   ├── validation.rs  # Input validation
+│   │   └── rate_limit.rs  # Rate limiting
+│   └── Cargo.toml
+├── docs/                   # Documentation
+├── main.py                # Main application entry
+└── requirements.txt       # Python dependencies
 ```
 
 ## Prerequisites
 
 ### System Requirements
-- **OS**: Ubuntu 20.04+ / macOS 12+ / Windows 11
-- **CPU**: 8-core CPU (e.g., AMD Ryzen 7 or Intel i7)
-- **RAM**: 16GB (32GB recommended)
-- **GPU**: NVIDIA RTX 3060+ (required for CloudXR/DLSS)
-- **Storage**: 500GB SSD
-- **Network**: 10+ Mbps (25+ Mbps for CloudXR)
+- **OS**: Any platform supported by Replit
+- **CPU**: Modern multi-core processor
+- **RAM**: 8GB+ (16GB recommended)
+- **Network**: Stable internet connection
 
-### Software Dependencies
-- **Git**: 2.40+
-- **Docker & Docker Compose**: v24.0+
+### Software Dependencies (Auto-installed on Replit)
 - **Node.js**: 20.x
-- **Python**: 3.12.7
-- **Rust**: 1.82.0
-- **Vercel CLI**: 35.0.0
-- **NVIDIA Drivers**: 550+ (Linux) or 546+ (Windows)
-- **CUDA Toolkit**: 12.3+ (if using GPU)
+- **Python**: 3.12+
+- **Rust**: 1.82.0+
+- **Git**: Latest
 
 ### Accounts & API Keys
 - **NVIDIA Developer**: [NVIDIA Developer Portal](https://developer.nvidia.com/)
@@ -60,319 +86,83 @@ OmniAI is a full-stack platform for building, deploying, and managing XR (VR/AR/
 - **Pinecone**: [Pinecone](https://www.pinecone.io/) (free tier)
 - **OpenAI**: For Vercel AI SDK (optional)
 
-## Installation
+## Installation on Replit
 
-1. **Clone Repository**:
-   ```bash
-   git clone https://github.com/CreoDAMO/OmniAI.git
-   cd OmniAI
-   cp .env.example .env
-   ```
+1. **Fork the Repository**:
+   - Open the [OmniAI Replit project](https://replit.com/@YourUsername/OmniAI)
+   - Click "Fork" to create your own copy
 
 2. **Configure Environment**:
-   Edit `.env` with your API keys:
-   ```env
-   REDIS_URL=redis://redis:6379/0
-   POSTGRES_URL=postgresql://omni:your-secure-password@postgres:5432/omni
-   POSTGRES_USER=omni
-   POSTGRES_PASSWORD=your-secure-password
-   POSTGRES_DB=omni
-   JWT_SECRET=your-super-secret-jwt-key-min-32-chars
-   ENCRYPTION_KEY=your-32-byte-encryption-key
+   - Open the Secrets tab in Replit
+   - Add the following environment variables:
+   ```
    NVIDIA_DEVELOPER_API_KEY=your-nvidia-developer-key
    GEFORCE_NOW_API_KEY=your-gfn-api-key
    CLOUDXR_LICENSE_KEY=your-cloudxr-license
-   PINECONE_API_KEY=your-pinecone-api-key
-   PINECONE_ENVIRONMENT=us-west1-gcp
-   OPENAI_API_KEY=your-openai-api-key
    GITHUB_TOKEN=your-github-personal-access-token
    VERCEL_TOKEN=your-vercel-api-token
-   VERCEL_ORG_ID=your-vercel-org-id
-   VERCEL_PROJECT_ID=your-vercel-project-id
-   UPLOAD_DIRECTORY=/app/uploads
-   MAX_FILE_SIZE=104857600
-   ```
-   Generate secure keys:
-   ```bash
-   openssl rand -base64 32
+   OPENAI_API_KEY=your-openai-api-key
+   JWT_SECRET=your-super-secret-jwt-key-min-32-chars
    ```
 
-3. **Install Dependencies**:
-   - **Backend**:
-     ```bash
-     cd backend
-     python -m venv venv
-     source venv/bin/activate  # Windows: venv\Scripts\activate
-     pip install -r requirements.txt
-     ```
-     **requirements.txt**:
-     ```plaintext
-     fastapi==0.115.0
-     uvicorn==0.30.0
-     redis==5.0.8
-     aioredis==2.0.1
-     asyncpg==0.29.0
-     pinecone-client==5.0.1
-     torch==2.4.0
-     transformers==4.45.0
-     sentence-transformers==3.0.0
-     pyjwt==2.9.0
-     cryptography==43.0.0
-     python-dotenv==1.0.1
-     requests==2.32.3
-     aiohttp==3.10.0
-     numpy==1.26.0
-     ```
-   - **Security**:
-     ```bash
-     cd security
-     cargo build --release
-     ```
-     **Cargo.toml**:
-     ```toml
-     [package]
-     name = "omni-ai-security"
-     version = "0.1.0"
-     edition = "2021"
+3. **Run the Application**:
+   - Click the "Run" button in Replit
+   - The system will automatically:
+     - Install frontend dependencies
+     - Install Python requirements
+     - Build Rust middleware
+     - Start all services
 
-     [dependencies]
-     rocket = "0.5.0"
-     serde = { version = "1.0", features = ["derive"] }
-     serde_json = "1.0"
-     redis = "0.25.2"
-     jsonwebtoken = "9.3.0"
-     ```
-   - **Frontend**:
-     ```bash
-     cd frontend
-     npm install
-     ```
-     **package.json**:
-     ```json
-     {
-       "dependencies": {
-         "react": "^18.2.0",
-         "react-dom": "^18.2.0",
-         "axios": "^1.7.2",
-         "@octokit/rest": "^21.0.0",
-         "@vercel/client": "^16.0.0",
-         "ai": "^5.0.0-beta.7"
-       },
-       "devDependencies": {
-         "@types/react": "^18.2.0",
-         "@types/react-dom": "^18.2.0",
-         "typescript": "^5.5.4"
-       }
-     }
-     ```
-   - **Vercel CLI**:
-     ```bash
-     npm install -g vercel@35.0.0
-     ```
-   - **NVIDIA SDKs**:
-     ```bash
-     mkdir nvidia_sdks && cd nvidia_sdks
-     git clone https://github.com/NVIDIAGameWorks/GeForceNOW-SDK.git gfn_sdk
-     git clone https://github.com/NVIDIA/DLSS.git dlss_sdk
-     # Download CloudXR SDK from NVIDIA Developer Portal
-     ```
+4. **Access the Application**:
+   - Frontend: Available at the Replit webview URL
+   - Backend API: Available at `https://your-repl-name.your-username.repl.co/api`
+   - Middleware: Runs on port 8080 internally
 
-4. **Initialize Databases**:
-   ```bash
-   cd backend
-   python -c "from src.core.config import init_db; import asyncio; asyncio.run(init_db())"
-   ```
+## Usage
 
-5. **Run Services**:
-   ```bash
-   docker-compose up --build -d
-   ```
-   **docker-compose.yml**:
-   ```yaml
-   version: '3.8'
-   services:
-     redis:
-       image: redis:7.0
-       ports:
-         - "6379:6379"
-     postgres:
-       image: postgres:16
-       ports:
-         - "5432:5432"
-       environment:
-         - POSTGRES_USER=${POSTGRES_USER}
-         - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-         - POSTGRES_DB=${POSTGRES_DB}
-       volumes:
-         - postgres_data:/var/lib/postgresql/data
-     security:
-       build:
-         context: ./security
-         dockerfile: Dockerfile
-       ports:
-         - "8008:8008"
-       environment:
-         - REDIS_URL=${REDIS_URL}
-         - JWT_SECRET=${JWT_SECRET}
-       depends_on:
-         - redis
-     backend:
-       build:
-         context: ./backend
-         dockerfile: Dockerfile
-       ports:
-         - "8000:8000"
-       environment:
-         - REDIS_URL=${REDIS_URL}
-         - POSTGRES_URL=${POSTGRES_URL}
-         - PINECONE_API_KEY=${PINECONE_API_KEY}
-         - PINECONE_ENVIRONMENT=${PINECONE_ENVIRONMENT}
-         - JWT_SECRET=${JWT_SECRET}
-         - NVIDIA_DEVELOPER_API_KEY=${NVIDIA_DEVELOPER_API_KEY}
-         - GEFORCE_NOW_API_KEY=${GEFORCE_NOW_API_KEY}
-         - CLOUDXR_LICENSE_KEY=${CLOUDXR_LICENSE_KEY}
-         - OPENAI_API_KEY=${OPENAI_API_KEY}
-         - GITHUB_TOKEN=${GITHUB_TOKEN}
-         - VERCEL_TOKEN=${VERCEL_TOKEN}
-         - ENCRYPTION_KEY=${ENCRYPTION_KEY}
-       volumes:
-         - ./nvidia_sdks:/app/nvidia_sdks
-         - ./Uploads:/app/uploads
-       depends_on:
-         - redis
-         - postgres
-         - security
-     frontend:
-       build:
-         context: ./frontend
-         dockerfile: Dockerfile
-       ports:
-         - "3000:3000"
-       depends_on:
-         - backend
-   volumes:
-     postgres_data:
-   ```
+### Dashboard Overview
+1. **Access the Dashboard**: Open your Replit webview URL
+2. **GitHub Integration**: Connect your GitHub account and manage repositories
+3. **Vercel Integration**: Deploy projects and manage deployments
+4. **NVIDIA Panel**: Configure NVIDIA SDKs and monitor GPU usage
+5. **Deployment Panel**: Orchestrate full-stack deployments
 
-6. **Test Setup**:
-   ```bash
-   curl http://localhost:8000/health
-   curl http://localhost:8008/health
-   open http://localhost:3000
-   ```
+### Core Features
+- **Real-time Deployment Status**: Monitor GitHub and Vercel deployments
+- **Integrated Development**: Code, build, and deploy in one environment
+- **NVIDIA SDK Integration**: Leverage GeForce NOW, CloudXR, and DLSS
+- **Secure Middleware**: Rust-based authentication and validation
+- **Modern UI**: React components with Mantine and Tailwind CSS
+
+### API Endpoints
+- **GitHub**: `/api/github/repositories`, `/api/github/status`
+- **Vercel**: `/api/vercel/projects`, `/api/vercel/deployments`
+- **NVIDIA**: `/api/nvidia/status`, `/api/nvidia/gpu-info`
 
 ## Storing API Keys
 
-### GitHub Secrets
-1. **Generate Keys**:
-   - **GitHub Token**: [GitHub Settings](https://github.com/settings/tokens) (scopes: `repo`, `admin:org`).
-   - **Vercel Token**: [Vercel Tokens](https://vercel.com/account/tokens).
-   - **Others**: NVIDIA ([NVIDIA Developer](https://developer.nvidia.com/)), Pinecone ([Pinecone](https://app.pinecone.io/)), OpenAI ([OpenAI](https://platform.openai.com/account/api-keys)).
-
-2. **Add Secrets**:
-   - Go to `https://github.com/CreoDAMO/OmniAI` > **Settings** > **Secrets and variables** > **Actions** > **Secrets** > **New repository secret**.
-   - Add:
+### Replit Secrets
+1. **Access Secrets**: Open the Secrets tab in your Replit project.
+2. **Add Variables**:
+   - Add the following environment variables:
      - `GITHUB_TOKEN`: Your GitHub token
      - `VERCEL_TOKEN`: Your Vercel token
-     - `VERCEL_ORG_ID`: Vercel org ID (from Vercel dashboard)
-     - `VERCEL_PROJECT_ID`: Vercel project ID
      - `OPENAI_API_KEY`: OpenAI key (optional)
      - `NVIDIA_DEVELOPER_API_KEY`: NVIDIA key
      - `GEFORCE_NOW_API_KEY`: GeForce NOW key
      - `CLOUDXR_LICENSE_KEY`: CloudXR key
-     - `PINECONE_API_KEY`: Pinecone key
-
-### Vercel Environment Variables
-1. **Link Project**:
-   ```bash
-   cd frontend
-   vercel link
-   ```
-
-2. **Add Variables**:
-   - Go to [Vercel Dashboard](https://vercel.com/dashboard) > Select project > **Settings** > **Environment Variables**.
-   - Add for **Production**, **Preview**, **Development**:
-     - `GITHUB_TOKEN`, `OPENAI_API_KEY`, `NVIDIA_DEVELOPER_API_KEY`, `GEFORCE_NOW_API_KEY`, `CLOUDXR_LICENSE_KEY`, `PINECONE_API_KEY`, `POSTGRES_URL`, `REDIS_URL`, `JWT_SECRET`, `ENCRYPTION_KEY`
-
-3. **Verify**:
-   ```bash
-   vercel env ls
-   ```
-
-## Usage
-
-### Create and Deploy a Project
-1. Open `http://localhost:3000`.
-2. Use the `AIConfigurator` component to:
-   - Enter repository/project names, select framework (e.g., Next.js).
-   - Click "Create & Deploy Project" to auto-configure and deploy via GitHub and Vercel.
-
-### Example API Call
-```bash
-curl -X POST http://localhost:8000/deployment/github/create_repo \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"repo_name": "my-ai-app", "description": "AI-generated app", "private": false, "project_type": "nextjs"}'
-```
+     - `JWT_SECRET`: JWT secret key
 
 ## Deployment
 
-### Local
-```bash
-docker-compose up --build -d
-```
-
-### Vercel
-- Update `github/workflows/vercel.yml`:
-  ```yaml
-  name: Vercel Deployment
-  env:
-    VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-    VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-  on:
-    push:
-      branches:
-        - main
-  jobs:
-    Deploy:
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v4
-        - name: Setup Node.js
-          uses: actions/setup-node@v3
-          with:
-            node-version: '20'
-        - name: Install Dependencies
-          run: npm install
-        - name: Install Vercel CLI
-          run: npm install --global vercel@35.0.0
-        - name: Pull Vercel Environment
-          run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-        - name: Build Project
-          run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        - name: Deploy to Vercel
-          run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-        - name: Set Vercel Environment Variables
-          run: |
-            vercel env add OPENAI_API_KEY production ${{ secrets.OPENAI_API_KEY }} --token=${{ secrets.VERCEL_TOKEN }}
-            vercel env add GITHUB_TOKEN production ${{ secrets.GITHUB_TOKEN }} --token=${{ secrets.VERCEL_TOKEN }}
-            vercel env add NVIDIA_DEVELOPER_API_KEY production ${{ secrets.NVIDIA_DEVELOPER_API_KEY }} --token=${{ secrets.VERCEL_TOKEN }}
-            vercel env add GEFORCE_NOW_API_KEY production ${{ secrets.GEFORCE_NOW_API_KEY }} --token=${{ secrets.VERCEL_TOKEN }}
-            vercel env add CLOUDXR_LICENSE_KEY production ${{ secrets.CLOUDXR_LICENSE_KEY }} --token=${{ secrets.VERCEL_TOKEN }}
-            vercel env add PINECONE_API_KEY production ${{ secrets.PINECONE_API_KEY }} --token=${{ secrets.VERCEL_TOKEN }}
-  ```
-- Push to trigger deployment:
-  ```bash
-  git add .
-  git commit -m "Deploy to Vercel"
-  git push origin main
-  ```
+### Replit
+- Simply fork the project and run it. Replit handles all dependencies and deployment.
 
 ## Troubleshooting
 
 - **GitHub API Errors**: Verify `GITHUB_TOKEN` scopes; check rate limits: `curl -H "Authorization: Bearer YOUR_GITHUB_TOKEN" https://api.github.com/rate_limit`.
 - **Vercel API Errors**: Validate `VERCEL_TOKEN` in [Vercel Dashboard](https://vercel.com/dashboard).
-- **Docker Issues**: Check `docker ps` and logs: `docker-compose logs backend`.
+- **Replit Issues**: Check Replit logs for build or runtime errors.
 
 ## Contributing
 
@@ -438,14 +228,14 @@ SOFTWARE.
    - Streamlined installation steps to focus on core setup.
    - Removed Unity/Unreal setup details to keep it minimal (can be added later if needed).
 3. **Integrated API Key Instructions**:
-   - Added detailed steps for storing API keys in GitHub Secrets and Vercel Environment Variables.
+   - Added detailed steps for storing API keys in GitHub Secrets and Replit Secrets.
    - Included commands to verify setup (`vercel env ls`, `curl` tests).
 4. **Updated License**:
    - Specified `CreoDAMO` as the copyright holder in the MIT License.
    - Removed alternative license discussion to keep README concise.
 5. **Streamlined Usage**:
-   - Focused on the `AIConfigurator` component and a single API example.
-   - Simplified deployment instructions with clear GitHub Actions workflow.
+   - Focused on the Dashboard overview
+   - Simplified deployment instructions for Replit.
 6. **Removed Redundant Sections**:
    - Dropped detailed API endpoint list, testing, and Kubernetes sections to reduce complexity (available in previous responses if needed).
 7. **Added Contact Info**:
@@ -482,12 +272,12 @@ SOFTWARE.
    ```
 
 4. **Store API Keys**:
-   - Follow the "Storing API Keys" section in the README to add secrets in GitHub (`https://github.com/CreoDAMO/OmniAI/settings/secrets/actions`) and Vercel (`https://vercel.com/dashboard`).
+   - Follow the "Storing API Keys" section in the README to add secrets in Replit.
 
 5. **Verify Setup**:
    - Check GitHub Actions: `https://github.com/CreoDAMO/OmniAI/actions`.
    - Test local services: `curl http://localhost:8000/health`.
-   - Verify Vercel deployment: `vercel --prod`.
+   - Verify Replit deployment.
 
 ---
 
@@ -588,7 +378,7 @@ mkdir -p $REPO_DIR/{backend,frontend,security,nvidia_sdks,uploads,.github/workfl
 cat << 'EOF' > $REPO_DIR/README.md
 # OmniAI: AI-Powered XR and Cloud Gaming Platform
 
-OmniAI is a full-stack platform for building, deploying, and managing XR (VR/AR/MR) and cloud gaming applications. It integrates **NVIDIA SDKs** (GeForce NOW, CloudXR, DLSS 4), **GitHub SDK**, **Vercel SDK**, and the **Vercel AI SDK** for AI-driven configuration, automated deployments, and high-performance rendering. The platform supports Unity 2022.3+, Unreal Engine 5.0+, and web frameworks like Next.js and Svelte.
+OmniAI is a full-stack platform for building, deploying, and managing XR (VR/AR/MR) and cloud gaming applications. It features a **React/TypeScript frontend**, **Python FastAPI backend**, and **enhanced Rust middleware** for security, caching, and performance optimization. The platform integrates **NVIDIA SDKs** (GeForce NOW, CloudXR, DLSS 4), **GitHub SDK**, **Vercel SDK**, and provides seamless deployment on Replit.
 
 ## Features
 
@@ -603,45 +393,69 @@ OmniAI is a full-stack platform for building, deploying, and managing XR (VR/AR/
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │◄──►│   Backend       │◄──►│   Security      │
-│   (React/TSX)   │    │   (FastAPI)     │    │   (Rust)        │
+│   Frontend      │◄──►│   Middleware    │◄──►│   Backend       │
+│ React/TypeScript│    │     (Rust)      │    │   (FastAPI)     │
+│   Vite + UI     │    │ Auth/Cache/Sec  │    │  NVIDIA/GitHub  │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          ▼                       ▼                       ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   NVIDIA SDKs   │    │   AI Services   │    │   Databases     │
-│   GFN/CloudXR   │    │   Vercel AI SDK │    │   Redis/Postgres│
-│   DLSS 4        │    │   Llama/OpenAI  │    │   Pinecone      │
+│   Components    │    │   Services      │    │   Integrations  │
+│ Dashboard/NVIDIA│    │ Rate Limiting   │    │ GitHub/Vercel   │
+│ GitHub/Vercel   │    │ Validation      │    │ NVIDIA SDKs     │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   GitHub SDK    │    │   Vercel SDK    │    │   Deployment    │
-│   (@octokit)    │    │   (@vercel)     │    │   (Kubernetes)  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+## Project Structure
+
+```
+omni-ai/
+├── frontend/                 # React/TypeScript frontend
+│   ├── src/
+│   │   ├── components/      # UI components
+│   │   │   ├── ui/         # Base UI components
+│   │   │   ├── Dashboard.tsx
+│   │   │   ├── GitHubIntegration.tsx
+│   │   │   ├── VercelIntegration.tsx
+│   │   │   ├── NVIDIAPanel.tsx
+│   │   │   └── DeploymentPanel.tsx
+│   │   ├── lib/            # Utilities
+│   │   ├── state/          # Recoil state management
+│   │   └── theme.ts        # Mantine theme
+│   ├── package.json
+│   └── vite.config.ts
+├── backend/                 # Python FastAPI backend
+│   └── core/
+│       ├── routes/         # API routes
+│       ├── config.py       # Configuration
+│       └── nvidia_integration.py
+├── middleware/              # Rust middleware
+│   ├── src/
+│   │   ├── main.rs        # Main server
+│   │   ├── auth.rs        # Authentication
+│   │   ├── cache.rs       # Caching layer
+│   │   ├── security.rs    # Security middleware
+│   │   ├── validation.rs  # Input validation
+│   │   └── rate_limit.rs  # Rate limiting
+│   └── Cargo.toml
+├── docs/                   # Documentation
+├── main.py                # Main application entry
+└── requirements.txt       # Python dependencies
 ```
 
 ## Prerequisites
 
 ### System Requirements
-- **OS**: Ubuntu 20.04+ / macOS 12+ / Windows 11
-- **CPU**: 8-core CPU (e.g., AMD Ryzen 7 or Intel i7)
-- **RAM**: 16GB (32GB recommended)
-- **GPU**: NVIDIA RTX 3060+ (required for CloudXR/DLSS)
-- **Storage**: 500GB SSD
-- **Network**: 10+ Mbps (25+ Mbps for CloudXR)
+- **OS**: Any platform supported by Replit
+- **CPU**: Modern multi-core processor
+- **RAM**: 8GB+ (16GB recommended)
+- **Network**: Stable internet connection
 
-### Software Dependencies
-- **Git**: 2.40+
-- **Docker & Docker Compose**: v24.0+
+### Software Dependencies (Auto-installed on Replit)
 - **Node.js**: 20.x
-- **Python**: 3.12.7
-- **Rust**: 1.82.0
-- **Vercel CLI**: 35.0.0
-- **NVIDIA Drivers**: 550+ (Linux) or 546+ (Windows)
-- **CUDA Toolkit**: 12.3+ (if using GPU)
-- **Unity Hub & Unity**: 2022.3 LTS (optional for XR)
-- **Unreal Engine**: 5.0+ (optional for XR)
+- **Python**: 3.12+
+- **Rust**: 1.82.0+
+- **Git**: Latest
 
 ### Accounts & API Keys
 - **NVIDIA Developer**: [NVIDIA Developer Portal](https://developer.nvidia.com/)
@@ -650,163 +464,83 @@ OmniAI is a full-stack platform for building, deploying, and managing XR (VR/AR/
 - **Pinecone**: [Pinecone](https://www.pinecone.io/) (free tier)
 - **OpenAI**: For Vercel AI SDK (optional)
 
-## Installation
+## Installation on Replit
 
-1. **Clone Repository**:
-   ```bash
-   git clone https://github.com/CreoDAMO/OmniAI.git
-   cd OmniAI
-   cp .env.example .env
-   ```
+1. **Fork the Repository**:
+   - Open the [OmniAI Replit project](https://replit.com/@YourUsername/OmniAI)
+   - Click "Fork" to create your own copy
 
 2. **Configure Environment**:
-   Edit `.env` with your API keys:
-   ```env
-   REDIS_URL=redis://redis:6379/0
-   POSTGRES_URL=postgresql://omni:your-secure-password@postgres:5432/omni
-   POSTGRES_USER=omni
-   POSTGRES_PASSWORD=your-secure-password
-   POSTGRES_DB=omni
-   JWT_SECRET=your-super-secret-jwt-key-min-32-chars
-   ENCRYPTION_KEY=your-32-byte-encryption-key
+   - Open the Secrets tab in Replit
+   - Add the following environment variables:
+   ```
    NVIDIA_DEVELOPER_API_KEY=your-nvidia-developer-key
    GEFORCE_NOW_API_KEY=your-gfn-api-key
    CLOUDXR_LICENSE_KEY=your-cloudxr-license
-   PINECONE_API_KEY=your-pinecone-api-key
-   PINECONE_ENVIRONMENT=us-west1-gcp
-   OPENAI_API_KEY=your-openai-api-key
    GITHUB_TOKEN=your-github-personal-access-token
    VERCEL_TOKEN=your-vercel-api-token
-   VERCEL_ORG_ID=your-vercel-org-id
-   VERCEL_PROJECT_ID=your-vercel-project-id
-   UPLOAD_DIRECTORY=/app/uploads
-   MAX_FILE_SIZE=104857600
-   ```
-   Generate secure keys:
-   ```bash
-   openssl rand -base64 32
+   OPENAI_API_KEY=your-openai-api-key
+   JWT_SECRET=your-super-secret-jwt-key-min-32-chars
    ```
 
-3. **Install Dependencies**:
-   - **Backend**:
-     ```bash
-     cd backend
-     python -m venv venv
-     source venv/bin/activate  # Windows: venv\Scripts\activate
-     pip install -r requirements.txt
-     ```
-   - **Security**:
-     ```bash
-     cd security
-     cargo build --release
-     ```
-   - **Frontend**:
-     ```bash
-     cd frontend
-     npm install
-     ```
-   - **Vercel CLI**:
-     ```bash
-     npm install -g vercel@35.0.0
-     ```
-   - **NVIDIA SDKs**:
-     ```bash
-     mkdir nvidia_sdks && cd nvidia_sdks
-     git clone https://github.com/NVIDIAGameWorks/GeForceNOW-SDK.git gfn_sdk
-     git clone https://github.com/NVIDIA/DLSS.git dlss_sdk
-     # Download CloudXR SDK from NVIDIA Developer Portal
-     ```
+3. **Run the Application**:
+   - Click the "Run" button in Replit
+   - The system will automatically:
+     - Install frontend dependencies
+     - Install Python requirements
+     - Build Rust middleware
+     - Start all services
 
-4. **Unity/Unreal Integration**:
-   - Install Unity 2022.3+ or Unreal Engine 5.0+.
-   - **Unity**:
-     - Import DLSS: Add `nvidia_sdks/dlss_sdk` via Package Manager.
-     - Add CloudXR: Copy `nvidia_sdks/cloudxr_sdk` to project and follow [CloudXR Guide](https://docs.nvidia.com/cloudxr-sdk/).
-   - **Unreal**:
-     - Install DLSS Plugin: Download from [Unreal Marketplace](https://www.unrealengine.com/marketplace/en-US/product/nvidia-dlss).
-     - Integrate CloudXR: Copy `nvidia_sdks/cloudxr_sdk` and follow [CloudXR Unreal Guide](https://docs.nvidia.com/cloudxr-sdk/).
-   - Configure API keys in project settings for GeForce NOW and CloudXR.
+4. **Access the Application**:
+   - Frontend: Available at the Replit webview URL
+   - Backend API: Available at `https://your-repl-name.your-username.repl.co/api`
+   - Middleware: Runs on port 8080 internally
 
-5. **Initialize Databases**:
-   ```bash
-   cd backend
-   python -c "from src.core.config import init_db; import asyncio; asyncio.run(init_db())"
-   ```
+## Usage
 
-6. **Run Services**:
-   ```bash
-   docker-compose up --build -d
-   ```
+### Dashboard Overview
+1. **Access the Dashboard**: Open your Replit webview URL
+2. **GitHub Integration**: Connect your GitHub account and manage repositories
+3. **Vercel Integration**: Deploy projects and manage deployments
+4. **NVIDIA Panel**: Configure NVIDIA SDKs and monitor GPU usage
+5. **Deployment Panel**: Orchestrate full-stack deployments
+
+### Core Features
+- **Real-time Deployment Status**: Monitor GitHub and Vercel deployments
+- **Integrated Development**: Code, build, and deploy in one environment
+- **NVIDIA SDK Integration**: Leverage GeForce NOW, CloudXR, and DLSS
+- **Secure Middleware**: Rust-based authentication and validation
+- **Modern UI**: React components with Mantine and Tailwind CSS
+
+### API Endpoints
+- **GitHub**: `/api/github/repositories`, `/api/github/status`
+- **Vercel**: `/api/vercel/projects`, `/api/vercel/deployments`
+- **NVIDIA**: `/api/nvidia/status`, `/api/nvidia/gpu-info`
 
 ## Storing API Keys
 
-### GitHub Secrets
-1. **Generate Keys**:
-   - **GitHub Token**: [GitHub Settings](https://github.com/settings/tokens) (scopes: `repo`, `admin:org`).
-   - **Vercel Token**: [Vercel Tokens](https://vercel.com/account/tokens).
-   - **Others**: NVIDIA ([NVIDIA Developer](https://developer.nvidia.com/)), Pinecone ([Pinecone](https://app.pinecone.io/)), OpenAI ([OpenAI](https://platform.openai.com/account/api-keys)).
-
-2. **Add Secrets**:
-   - Go to `https://github.com/CreoDAMO/OmniAI` > **Settings** > **Secrets and variables** > **Actions** > **Secrets** > **New repository secret**.
-   - Add:
+### Replit Secrets
+1. **Access Secrets**: Open the Secrets tab in your Replit project.
+2. **Add Variables**:
+   - Add the following environment variables:
      - `GITHUB_TOKEN`: Your GitHub token
      - `VERCEL_TOKEN`: Your Vercel token
-     - `VERCEL_ORG_ID`: Vercel org ID
-     - `VERCEL_PROJECT_ID`: Vercel project ID
      - `OPENAI_API_KEY`: OpenAI key (optional)
      - `NVIDIA_DEVELOPER_API_KEY`: NVIDIA key
      - `GEFORCE_NOW_API_KEY`: GeForce NOW key
      - `CLOUDXR_LICENSE_KEY`: CloudXR key
-     - `PINECONE_API_KEY`: Pinecone key
-
-### Vercel Environment Variables
-1. **Link Project**:
-   ```bash
-   cd frontend
-   vercel link
-   ```
-
-2. **Add Variables**:
-   - Go to [Vercel Dashboard](https://vercel.com/dashboard) > Select project > **Settings** > **Environment Variables**.
-   - Add for **Production**, **Preview**, **Development**:
-     - `GITHUB_TOKEN`, `OPENAI_API_KEY`, `NVIDIA_DEVELOPER_API_KEY`, `GEFORCE_NOW_API_KEY`, `CLOUDXR_LICENSE_KEY`, `PINECONE_API_KEY`, `POSTGRES_URL`, `REDIS_URL`, `JWT_SECRET`, `ENCRYPTION_KEY`
-
-3. **Verify**:
-   ```bash
-   vercel env ls
-   ```
-
-## Usage
-
-### Create and Deploy a Project
-1. Open `http://localhost:3000`.
-2. Use the `AIConfigurator` component to:
-   - Enter repository/project names, select framework (e.g., Next.js).
-   - Click "Create & Deploy Project" to auto-configure and deploy via GitHub and Vercel.
-
-### Example API Call
-```bash
-curl -X POST http://localhost:8000/deployment/github/create_repo \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"repo_name": "my-ai-app", "description": "AI-generated app", "private": false, "project_type": "nextjs"}'
-```
+     - `JWT_SECRET`: JWT secret key
 
 ## Deployment
 
-### Local
-```bash
-docker-compose up --build -d
-```
-
-### Vercel
-- Update `github/workflows/vercel.yml` and push to `main` to trigger deployment.
+### Replit
+- Simply fork the project and run it. Replit handles all dependencies and deployment.
 
 ## Troubleshooting
 
 - **GitHub API Errors**: Verify `GITHUB_TOKEN` scopes; check rate limits: `curl -H "Authorization: Bearer YOUR_GITHUB_TOKEN" https://api.github.com/rate_limit`.
 - **Vercel API Errors**: Validate `VERCEL_TOKEN` in [Vercel Dashboard](https://vercel.com/dashboard).
-- **Docker Issues**: Check `docker ps` and logs: `docker-compose logs backend`.
+- **Replit Issues**: Check Replit logs for build or runtime errors.
 
 ## Contributing
 
@@ -827,8 +561,6 @@ This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for d
 - [GitHub SDK](https://github.com/octokit/rest.js)
 - [Vercel SDK](https://vercel.com/docs/api)
 - [Vercel AI SDK](https://sdk.vercel.ai/docs)
-- [Unity DLSS](https://developer.nvidia.com/rtx/dlss)
-- [Unreal DLSS](https://www.unrealengine.com/marketplace/en-US/product/nvidia-dlss)
 
 ## Contact
 
@@ -1052,90 +784,17 @@ EOF
 cat << 'EOF' > $REPO_DIR/.github/workflows/vercel.yml
 name: Vercel Deployment
 env:
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-on:
-  push:
-    branches:
-      - main
-jobs:
-  Deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-      - name: Install Dependencies
-        run: npm install
-      - name: Install Vercel CLI
-        run: npm install --global vercel@35.0.0
-      - name: Pull Vercel Environment
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Build Project
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Deploy to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Set Vercel Environment Variables
-        run: |
-          vercel env add OPENAI_API_KEY production ${{ secrets.OPENAI_API_KEY }} --token=${{ secrets.VERCEL_TOKEN }}
-          vercel env add GITHUB_TOKEN production ${{ secrets.GITHUB_TOKEN }} --token=${{ secrets.VERCEL_TOKEN }}
-          vercel env add NVIDIA_DEVELOPER_API_KEY production ${{ secrets.NVIDIA_DEVELOPER_API_KEY }} --token=${{ secrets.VERCEL_TOKEN }}
-          vercel env add GEFORCE_NOW_API_KEY production ${{ secrets.GEFORCE_NOW_API_KEY }} --token=${{ secrets.VERCEL_TOKEN }}
-          vercel env add CLOUDXR_LICENSE_KEY production ${{ secrets.CLOUDXR_LICENSE_KEY }} --token=${{ secrets.VERCEL_TOKEN }}
-          vercel env add PINECONE_API_KEY production ${{ secrets.PINECONE_API_KEY }} --token=${{ secrets.VERCEL_TOKEN }}
-EOF
-
-# Create .env.example
-cat << 'EOF' > $REPO_DIR/.env.example
-REDIS_URL=redis://redis:6379/0
-POSTGRES_URL=postgresql://omni:your-secure-password@postgres:5432/omni
-POSTGRES_USER=omni
-POSTGRES_PASSWORD=your-secure-password
-POSTGRES_DB=omni
-JWT_SECRET=your-super-secret-jwt-key-min-32-chars
-ENCRYPTION_KEY=your-32-byte-encryption-key
-NVIDIA_DEVELOPER_API_KEY=your-nvidia-developer-key
-GEFORCE_NOW_API_KEY=your-gfn-api-key
-CLOUDXR_LICENSE_KEY=your-cloudxr-license
-PINECONE_API_KEY=your-pinecone-api-key
-PINECONE_ENVIRONMENT=us-west1-gcp
-OPENAI_API_KEY=your-openai-api-key
-GITHUB_TOKEN=your-github-personal-access-token
-VERCEL_TOKEN=your-vercel-api-token
-VERCEL_ORG_ID=your-vercel-org-id
-VERCEL_PROJECT_ID=your-vercel-project-id
-UPLOAD_DIRECTORY=/app/uploads
-MAX_FILE_SIZE=104857600
-EOF
-
-# Initialize git and push to GitHub
-cd $REPO_DIR
-git init
-git add .
-git commit -m "Initialize OmniAI repository with README, LICENSE, and core files"
-git remote add origin $REPO_URL
-git push -u origin main
-
-echo "OmniAI repository initialized with core files."
-echo "Next steps:"
-echo "1. Add API keys to GitHub Secrets: https://github.com/CreoDAMO/OmniAI/settings/secrets/actions"
-echo "2. Add API keys to Vercel Environment Variables: https://vercel.com/dashboard"
-echo "3. Run 'docker-compose up --build -d' to start services."
-```
-
-### Usage
-1. Save the script as `init_omni_ai.sh`.
-2. Make it executable:
-   ```bash
-   chmod +x init_omni_ai.sh
-   ```
-3. Run the script:
-   ```bash
-   ./init_omni_ai.sh
-   ```
-4. Ensure you have GitHub credentials configured (`git config --global user.name` and `user.email`) and a valid `GITHUB_TOKEN` for pushing to `https://github.com/CreoDAMO/OmniAI`.
+  VERCEL_ORG_### Usage
+1.  Save the script as `init_omni_ai.sh`.
+2.  Make it executable:
+    ```bash
+    chmod +x init_omni_ai.sh
+    ```
+3.  Run the script:
+    ```bash
+    ./init_omni_ai.sh
+    ```
+4.  Ensure you have GitHub credentials configured (`git config --global user.name` and `user.email`) and a valid `GITHUB_TOKEN` for pushing to `https://github.com/CreoDAMO/OmniAI`.
 
 **Note**: The script assumes the repository is empty or doesn't exist. If `https://github.com/CreoDAMO/OmniAI` already has files, modify the script to avoid overwriting existing content (e.g., add `git pull` before `git push`).
 
@@ -1146,10 +805,10 @@ echo "3. Run 'docker-compose up --build -d' to start services."
 Below is a test suite to verify the OmniAI setup, including backend, frontend, security service, databases, and API key integration. The tests focus on ensuring dependencies are installed, services are running, and API endpoints function correctly.
 
 ### Test Suite Structure
-- **Backend Tests**: Verify FastAPI endpoints, database connections, and GitHub/Vercel integrations.
-- **Security Tests**: Validate Rust-based security service and JWT authentication.
-- **Frontend Tests**: Check React UI and API calls.
-- **Deployment Tests**: Confirm GitHub Actions and Vercel deployment.
+-   **Backend Tests**: Verify FastAPI endpoints, database connections, and GitHub/Vercel integrations.
+-   **Security Tests**: Validate Rust-based security service and JWT authentication.
+-   **Frontend Tests**: Check React UI and API calls.
+-   **Deployment Tests**: Confirm GitHub Actions and Replit deployment.
 
 ### `backend/tests/test_setup.py`
 ```python
@@ -1280,31 +939,31 @@ test('creates GitHub repo and Vercel project', async () => {
 ```
 
 ### Running Tests
-1. **Backend**:
-   ```bash
-   cd backend
-   pytest tests/test_setup.py
-   ```
-2. **Security**:
-   ```bash
-   cd security
-   cargo test
-   ```
-3. **Frontend**:
-   ```bash
-   cd frontend
-   npm install vitest @testing-library/react @testing-library/jest-dom
-   npm test
-   ```
+1.  **Backend**:
+    ```bash
+    cd backend
+    pytest tests/test_setup.py
+    ```
+2.  **Security**:
+    ```bash
+    cd security
+    cargo test
+    ```
+3.  **Frontend**:
+    ```bash
+    cd frontend
+    npm install vitest @testing-library/react @testing-library/jest-dom
+    npm test
+    ```
 
 ### Test Requirements
-- Install `pytest`, `pytest-asyncio`, and `vitest`:
-  ```bash
-  pip install pytest pytest-asyncio
-  npm install --save-dev vitest @testing-library/react @testing-library/jest-dom
-  ```
-- Ensure API keys are set in `.env` for integration tests.
-- Mock API responses for GitHub/Vercel if tokens are unavailable.
+-   Install `pytest`, `pytest-asyncio`, and `vitest`:
+    ```bash
+    pip install pytest pytest-asyncio
+    npm install --save-dev vitest @testing-library/react @testing-library/jest-dom
+    ```
+-   Ensure API keys are set in `.env` for integration tests.
+-   Mock API responses for GitHub/Vercel if tokens are unavailable.
 
 ---
 
@@ -1312,13 +971,13 @@ test('creates GitHub repo and Vercel project', async () => {
 
 The `README.md` above already includes Unity/Unreal integration steps in the **Installation** section (step 4). Here's a summary of the added steps for clarity:
 
-- **Unity**:
-  - Import DLSS via Package Manager from `nvidia_sdks/dlss_sdk`.
-  - Add CloudXR by copying `nvidia_sdks/cloudxr_sdk` to the project and following the [CloudXR Guide](https://docs.nvidia.com/cloudxr-sdk/).
-  - Configure API keys in Unity project settings for GeForce NOW and CloudXR.
-- **Unreal**:
-  - Install DLSS Plugin from [Unreal Marketplace](https://www.unrealengine.com/marketplace/en-US/product/nvidia-dlss).
-  - Integrate CloudXR by copying `nvidia_sdks/cloudxr_sdk` and following the [CloudXR Unreal Guide](https://docs.nvidia.com/cloudxr-sdk/).
+-   **Unity**:
+    -   Import DLSS via Package Manager from `nvidia_sdks/dlss_sdk`.
+    -   Add CloudXR by copying `nvidia_sdks/cloudxr_sdk` to the project and following the [CloudXR Guide](https://docs.nvidia.com/cloudxr-sdk/).
+    -   Configure API keys in Unity project settings for GeForce NOW and CloudXR.
+-   **Unreal**:
+    -   Install DLSS Plugin from [Unreal Marketplace](https://www.unrealengine.com/marketplace/en-US/product/nvidia-dlss).
+    -   Integrate CloudXR by copying `nvidia_sdks/cloudxr_sdk` and following the [CloudXR Unreal Guide](https://docs.nvidia.com/cloudxr-sdk/).
 
 These steps ensure developers can set up XR projects with NVIDIA SDKs. If you need more detailed Unity/Unreal instructions (e.g., specific code snippets), let me know.
 
@@ -1334,46 +993,19 @@ The `NOTICE` file is included in the script above (`$REPO_DIR/NOTICE`). It lists
 
 Since `https://github.com/CreoDAMO/OmniAI` is currently empty, you can initialize it using the script above. Here are the manual steps if you prefer to do it directly:
 
-1. **Create Repository** (if not already done):
-   - Go to `https://github.com/new`.
-   - Name: `OmniAI`, Owner: `CreoDAMO`.
-   - Set to **Public**, check "Add a README file" (optional, will be overwritten by script).
-   - Click **Create repository**.
+1.  **Create Repository** (if not already done):
+    -   Go to `https://github.com/new`.
+    -   Name: `OmniAI`, Owner: `CreoDAMO`.
+    -   Set to **Public**, check "Add a README file" (optional, will be overwritten by script).
+    -   Click **Create repository**.
 
-2. **Clone Locally**:
-   ```bash
-   git clone https://github.com/CreoDAMO/OmniAI.git
-   cd OmniAI
-   ```
+2.  **Clone Locally**:
+    ```bash
+    git clone https://github.com/CreoDAMO/OmniAI.git
+    cd OmniAI
+    ```
 
-3. **Run Initialization Script**:
-   ```bash
-   chmod +x init_omni_ai.sh
-   ./init_omni_ai.sh
-   ```
-
-4. **Add API Keys to GitHub Secrets**:
-   - Go to `https://github.com/CreoDAMO/OmniAI/settings/secrets/actions`.
-   - Add secrets as listed in the README:
-     - `GITHUB_TOKEN`, `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, `OPENAI_API_KEY`, `NVIDIA_DEVELOPER_API_KEY`, `GEFORCE_NOW_API_KEY`, `CLOUDXR_LICENSE_KEY`, `PINECONE_API_KEY`.
-
-5. **Add Vercel Environment Variables**:
-   ```bash
-   cd frontend
-   vercel link
-   ```
-   - Go to [Vercel Dashboard](https://vercel.com/dashboard) > Project > **Settings** > **Environment Variables**.
-   - Add variables as listed in the README.
-
-6. **Verify Push**:
-   - Check `https://github.com/CreoDAMO/OmniAI` for files (`README.md`, `LICENSE`, etc.).
-   - Verify GitHub Actions: `https://github.com/CreoDAMO/OmniAI/actions`.
-
----
-
-## Additional Notes
-- **Script Customization**: Modify `init_omni_ai.sh` to skip `git push` if you want to review files locally first.
-- **Test Suite Expansion**: Add more tests for specific endpoints (e.g., `/cloudxr/stream/start`) or Unity/Unreal integration if needed.
-- **Repository Access**: Ensure you have write access to `https://github.com/CreoDAMO/OmniAI`. If you need assistance with GitHub permissions, let me know.
-- **Contact Email**: Update the placeholder `[jacquedegraff81@gmail.com]` in `README.md` and `CODE_OF_CONDUCT.md` with your actual email.
-
+3.  **Run Initialization Script**:
+    ```bash
+    chmod +x init_omni_ai.sh
+    ./init_omni_ai.sh

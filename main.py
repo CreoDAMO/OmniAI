@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
@@ -32,17 +31,17 @@ app.include_router(nvidia_router)
 app.include_router(github_router)
 app.include_router(vercel_router)
 
-# Serve frontend static files
-if os.path.exists("frontend/dist"):
-    app.mount("/static", StaticFiles(directory="frontend/dist"), name="static")
-    
-    @app.get("/")
-    async def serve_frontend():
-        return FileResponse("frontend/dist/index.html")
-else:
-    @app.get("/")
-    async def root():
-        return {"message": "OmniAI Platform - AI-Powered XR and Cloud Gaming"}
+# Serve frontend static files - REMOVED as frontend is handled by Vite
+# if os.path.exists("frontend/dist"):
+#     app.mount("/static", StaticFiles(directory="frontend/dist"), name="static")
+
+#     @app.get("/")
+#     async def serve_frontend():
+#         return FileResponse("frontend/dist/index.html")
+# else:
+@app.get("/")
+async def root():
+    return {"message": "OmniAI Platform - AI-Powered XR and Cloud Gaming"}
 
 @app.get("/health")
 async def health_check():
