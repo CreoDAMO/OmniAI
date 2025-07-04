@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 """
 OmniAI Platform Setup Script
@@ -11,12 +10,12 @@ import subprocess
 def install_dependencies():
     """Install Python dependencies"""
     print("🔧 Installing Python dependencies...")
-    
+
     # Validate requirements.txt exists and is safe
     requirements_file = "requirements.txt"
     if not os.path.exists(requirements_file):
         raise FileNotFoundError(f"{requirements_file} not found")
-    
+
     # Use static command list to prevent command injection
     cmd = [sys.executable, "-m", "pip", "install", "-r", requirements_file]
     subprocess.check_call(cmd)
@@ -31,17 +30,17 @@ def create_directories():
         "uploads",
         "logs"
     ]
-    
+
     for directory in directories:
         os.makedirs(directory, exist_ok=True)
         print(f"   Created: {directory}")
-    
+
     print("✅ Directories created successfully!")
 
 def setup_environment():
     """Setup environment file"""
     print("🔐 Setting up environment...")
-    
+
     if not os.path.exists(".env"):
         print("   Copying .env.example to .env")
         if os.path.exists(".env.example"):
@@ -52,26 +51,26 @@ def setup_environment():
             print("   ⚠️  .env.example not found")
     else:
         print("   .env file already exists")
-    
+
     print("✅ Environment setup complete!")
 
 def main():
     """Main setup function"""
     print("🚀 OmniAI Platform Setup")
     print("=" * 40)
-    
+
     try:
         create_directories()
         install_dependencies()
         setup_environment()
-        
+
         print("\n" + "=" * 40)
         print("🎉 Setup complete!")
         print("\nNext steps:")
         print("1. Edit .env file with your API keys")
         print("2. Run: python main.py")
         print("3. Visit: http://localhost:5000")
-        
+
     except Exception as e:
         print(f"\n❌ Setup failed: {e}")
         sys.exit(1)
