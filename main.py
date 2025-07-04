@@ -75,4 +75,7 @@ async def api_status():
 
 if __name__ == "__main__":
     import uvicorn
+    print("🐍 Starting Python Backend on port 5000")
+    print("🦀 Rust Middleware should be running on port 8080")
+    print("🌐 Access the application at: http://localhost:8080")
     uvicorn.run(app, host="0.0.0.0", port=5000)
