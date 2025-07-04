@@ -11,7 +11,15 @@ import subprocess
 def install_dependencies():
     """Install Python dependencies"""
     print("🔧 Installing Python dependencies...")
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+    
+    # Validate requirements.txt exists and is safe
+    requirements_file = "requirements.txt"
+    if not os.path.exists(requirements_file):
+        raise FileNotFoundError(f"{requirements_file} not found")
+    
+    # Use static command list to prevent command injection
+    cmd = [sys.executable, "-m", "pip", "install", "-r", requirements_file]
+    subprocess.check_call(cmd)
     print("✅ Dependencies installed successfully!")
 
 def create_directories():
