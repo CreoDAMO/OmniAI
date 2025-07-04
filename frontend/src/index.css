@@ -1,0 +1,32 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-omni-dark text-white font-inter;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-nvidia-green hover:bg-nvidia-green/90 text-black font-medium px-6 py-3 rounded-lg transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply bg-omni-gray hover:bg-omni-gray/80 text-white font-medium px-6 py-3 rounded-lg border border-gray-600 transition-colors;
+  }
+  
+  .card {
+    @apply bg-omni-gray border border-gray-700 rounded-xl p-6 shadow-lg;
+  }
+  
+  .input {
+    @apply bg-omni-gray border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-nvidia-green;
+  }
+}

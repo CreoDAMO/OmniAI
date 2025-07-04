@@ -6,6 +6,8 @@ from fastapi.staticfiles import StaticFiles
 import os
 from dotenv import load_dotenv
 from backend.core.routes.nvidia_routes import router as nvidia_router
+from backend.core.routes.github_routes import router as github_router
+from backend.core.routes.vercel_routes import router as vercel_router
 
 # Load environment variables
 load_dotenv()
@@ -27,22 +29,20 @@ app.add_middleware(
 
 # Include API routes
 app.include_router(nvidia_router)
+app.include_router(github_router)
+app.include_router(vercel_router)
 
-# Serve frontend
-if os.path.exists("frontend"):
-    app.mount("/static", StaticFiles(directory="frontend"), name="static")
+# Serve frontend static files
+if os.path.exists("frontend/dist"):
+    app.mount("/static", StaticFiles(directory="frontend/dist"), name="static")
     
     @app.get("/")
     async def serve_frontend():
-        return FileResponse("frontend/index.html")
+        return FileResponse("frontend/dist/index.html")
 else:
     @app.get("/")
     async def root():
         return {"message": "OmniAI Platform - AI-Powered XR and Cloud Gaming"}
-
-@app.get("/")
-async def root():
-    return {"message": "OmniAI Platform - AI-Powered XR and Cloud Gaming"}
 
 @app.get("/health")
 async def health_check():
