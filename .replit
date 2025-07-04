@@ -91,7 +91,7 @@ args = "pip install -r requirements.txt"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python quick_test.py"
+args = "python stress_test.py"
 
 [[workflows.workflow]]
 name = "Quick Start Backend"
