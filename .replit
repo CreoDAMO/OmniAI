@@ -11,6 +11,14 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
+args = "curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "sudo apt-get install -y nodejs"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
 args = "cd frontend && npm install"
 
 [[workflows.workflow.tasks]]
@@ -92,3 +100,46 @@ args = "pip install -r requirements.txt"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python quick_test.py"
+
+[[workflows.workflow]]
+name = "Quick Start Backend"
+author = 44613894
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pip install -r requirements.txt"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python main.py"
+
+[[workflows.workflow]]
+name = "Build Frontend"
+author = 44613894
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "sudo apt-get install -y nodejs"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd frontend && npm install && npm run build"
+
+[[workflows.workflow]]
+name = "Dev Mode (Parallel)"
+author = 44613894
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd frontend && npm run dev"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python main.py"
