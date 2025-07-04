@@ -1,155 +1,292 @@
 
-import { useState, useEffect } from 'react'
-import { Activity, Server, Database, Cpu, Cloud, Zap } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import { useRecoilValue } from 'recoil'
+import {
+  Grid,
+  Card,
+  Text,
+  Progress,
+  Group,
+  RingProgress,
+  SimpleGrid,
+  Badge,
+  ActionIcon,
+  Tooltip,
+  Stack,
+  Alert,
+  Notification,
+  rem
+} from '@mantine/core'
+import { LineChart, AreaChart, BarChart } from '@mantine/charts'
+import {
+  IconCpu,
+  IconCloud,
+  IconBolt,
+  IconActivity,
+  IconTrendingUp,
+  IconServer,
+  IconDatabase,
+  IconRefresh,
+  IconAlertTriangle,
+  IconCheck
+} from '@tabler/icons-react'
+import { platformStatusState, nvidiaState } from '../state/atoms'
+import { formatBytes, formatDuration } from '../lib/utils'
 
-interface DashboardProps {
-  status: any
-}
+const performanceData = [
+  { time: '00:00', fps: 60, latency: 15, bandwidth: 1.2 },
+  { time: '00:05', fps: 58, latency: 18, bandwidth: 1.4 },
+  { time: '00:10', fps: 62, latency: 12, bandwidth: 1.3 },
+  { time: '00:15', fps: 59, latency: 16, bandwidth: 1.5 },
+  { time: '00:20', fps: 61, latency: 14, bandwidth: 1.1 },
+]
 
-export default function Dashboard({ status }: DashboardProps) {
-  const [healthData, setHealthData] = useState<any>(null)
+const systemMetrics = [
+  { label: 'CPU Usage', value: 45, color: 'blue' },
+  { label: 'Memory', value: 67, color: 'green' },
+  { label: 'Storage', value: 23, color: 'orange' },
+  { label: 'Network', value: 89, color: 'red' },
+]
+
+function Dashboard() {
+  const platformStatus = useRecoilValue(platformStatusState)
+  const nvidia = useRecoilValue(nvidiaState)
+  const [metrics, setMetrics] = useState({
+    activeProjects: 3,
+    totalDeployments: 12,
+    averageLatency: 15,
+    uptime: 99.9
+  })
 
   useEffect(() => {
-    fetchHealthData()
-    const interval = setInterval(fetchHealthData, 30000) // Refresh every 30 seconds
+    // Simulate real-time metrics updates
+    const interval = setInterval(() => {
+      setMetrics(prev => ({
+        ...prev,
+        averageLatency: Math.floor(Math.random() * 10) + 10,
+        uptime: 99.9 + Math.random() * 0.1
+      }))
+    }, 5000)
+
     return () => clearInterval(interval)
   }, [])
 
-  const fetchHealthData = async () => {
-    try {
-      const response = await fetch('/health')
-      const data = await response.json()
-      setHealthData(data)
-    } catch (error) {
-      console.error('Failed to fetch health data:', error)
-    }
-  }
-
-  const services = [
+  const statCards = [
     {
-      name: 'NVIDIA GeForce NOW',
-      status: status?.nvidia_integration?.geforce_now || 'not_configured',
-      icon: Cpu,
-      description: 'Cloud gaming streaming service'
+      title: 'Active Projects',
+      value: metrics.activeProjects,
+      icon: IconActivity,
+      color: 'blue',
+      change: '+12%',
+      positive: true
     },
     {
-      name: 'NVIDIA CloudXR',
-      status: status?.nvidia_integration?.cloudxr || 'not_configured',
-      icon: Server,
-      description: 'Extended reality streaming platform'
+      title: 'Total Deployments',
+      value: metrics.totalDeployments,
+      icon: IconBolt,
+      color: 'green',
+      change: '+8%',
+      positive: true
     },
     {
-      name: 'NVIDIA DLSS',
-      status: status?.nvidia_integration?.dlss || 'not_configured',
-      icon: Zap,
-      description: 'AI-powered super resolution'
+      title: 'Avg Latency',
+      value: `${metrics.averageLatency}ms`,
+      icon: IconTrendingUp,
+      color: 'orange',
+      change: '-5%',
+      positive: true
     },
     {
-      name: 'GitHub Integration',
-      status: status?.deployment?.github || 'not_configured',
-      icon: Database,
-      description: 'Repository management and automation'
-    },
-    {
-      name: 'Vercel Platform',
-      status: status?.deployment?.vercel || 'not_configured',
-      icon: Cloud,
-      description: 'Deployment and hosting platform'
-    },
-    {
-      name: 'AI Services',
-      status: status?.ai_services?.openai || 'not_configured',
-      icon: Activity,
-      description: 'OpenAI and Pinecone integration'
+      title: 'Uptime',
+      value: `${metrics.uptime.toFixed(1)}%`,
+      icon: IconServer,
+      color: 'teal',
+      change: '+0.1%',
+      positive: true
     }
   ]
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'available': return 'text-green-400'
-      case 'not_configured': return 'text-yellow-400'
-      default: return 'text-red-400'
-    }
-  }
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'available': return 'Online'
-      case 'not_configured': return 'Not Configured'
-      default: return 'Offline'
-    }
-  }
-
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold text-white">Platform Overview</h2>
-        <button 
-          onClick={fetchHealthData}
-          className="btn-secondary"
-        >
-          Refresh Status
-        </button>
-      </div>
-
-      {healthData && (
-        <div className="card">
-          <h3 className="text-xl font-semibold mb-4 text-white">System Health</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-400">{healthData.status}</div>
-              <div className="text-gray-400">Overall Status</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-400">
-                {Object.keys(healthData.services || {}).length}
-              </div>
-              <div className="text-gray-400">Active Services</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-400">v1.0.0</div>
-              <div className="text-gray-400">Platform Version</div>
-            </div>
+    <Stack gap="lg">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Group justify="space-between" align="center">
+          <div>
+            <Text size="xl" fw={700} mb={5}>
+              Platform Dashboard
+            </Text>
+            <Text c="dimmed" size="sm">
+              Monitor your XR and cloud gaming platform performance
+            </Text>
           </div>
-        </div>
-      )}
+          <Tooltip label="Refresh Data">
+            <ActionIcon variant="light" size="lg">
+              <IconRefresh size={20} />
+            </ActionIcon>
+          </Tooltip>
+        </Group>
+      </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {services.map((service) => {
-          const Icon = service.icon
-          return (
-            <div key={service.name} className="card hover:bg-gray-800/50 transition-colors">
-              <div className="flex items-start space-x-4">
-                <div className="p-3 bg-nvidia-green/20 rounded-lg">
-                  <Icon className="w-6 h-6 text-nvidia-green" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-white mb-1">{service.name}</h3>
-                  <p className="text-sm text-gray-400 mb-2">{service.description}</p>
-                  <div className={`text-sm font-medium ${getStatusColor(service.status)}`}>
-                    {getStatusText(service.status)}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
+      {/* Status Alert */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
+        <Alert 
+          icon={platformStatus.backend ? <IconCheck size={16} /> : <IconAlertTriangle size={16} />}
+          color={platformStatus.backend ? 'green' : 'red'}
+          title={platformStatus.backend ? 'All Systems Operational' : 'System Issues Detected'}
+        >
+          {platformStatus.backend 
+            ? 'All services are running smoothly. NVIDIA integration is active.'
+            : 'Some services are experiencing issues. Please check the system logs.'
+          }
+        </Alert>
+      </motion.div>
 
-      <div className="card">
-        <h3 className="text-xl font-semibold mb-4 text-white">Quick Actions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="btn-primary w-full">
-            Configure NVIDIA SDKs
-          </button>
-          <button className="btn-secondary w-full">
-            Setup GitHub Integration
-          </button>
-          <button className="btn-secondary w-full">
-            Deploy to Vercel
-          </button>
-        </div>
-      </div>
-    </div>
+      {/* Stats Cards */}
+      <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="lg">
+        {statCards.map((stat, index) => (
+          <motion.div
+            key={stat.title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
+            whileHover={{ scale: 1.02 }}
+          >
+            <Card padding="lg" radius="md" withBorder>
+              <Group justify="space-between">
+                <div>
+                  <Text c="dimmed" size="sm" tt="uppercase" fw={700}>
+                    {stat.title}
+                  </Text>
+                  <Text fw={700} size="xl" mt={5}>
+                    {stat.value}
+                  </Text>
+                  <Badge 
+                    color={stat.positive ? 'green' : 'red'} 
+                    variant="light" 
+                    size="sm"
+                    mt={5}
+                  >
+                    {stat.change}
+                  </Badge>
+                </div>
+                <ActionIcon variant="light" color={stat.color} size="xl" radius="md">
+                  <stat.icon size={28} />
+                </ActionIcon>
+              </Group>
+            </Card>
+          </motion.div>
+        ))}
+      </SimpleGrid>
+
+      {/* Charts and Metrics */}
+      <Grid>
+        <Grid.Col span={{ base: 12, md: 8 }}>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <Card padding="lg" radius="md" withBorder>
+              <Text fw={700} mb="md">Performance Metrics</Text>
+              <AreaChart
+                h={300}
+                data={performanceData}
+                dataKey="time"
+                series={[
+                  { name: 'fps', color: 'blue.6' },
+                  { name: 'latency', color: 'red.6' },
+                  { name: 'bandwidth', color: 'green.6' }
+                ]}
+                curveType="monotone"
+                connectNulls={false}
+                withGradient
+              />
+            </Card>
+          </motion.div>
+        </Grid.Col>
+
+        <Grid.Col span={{ base: 12, md: 4 }}>
+          <Stack gap="lg">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <Card padding="lg" radius="md" withBorder>
+                <Text fw={700} mb="md">System Health</Text>
+                <Stack gap="sm">
+                  {systemMetrics.map((metric) => (
+                    <div key={metric.label}>
+                      <Group justify="space-between" mb={5}>
+                        <Text size="sm">{metric.label}</Text>
+                        <Text size="sm" fw={500}>{metric.value}%</Text>
+                      </Group>
+                      <Progress 
+                        value={metric.value} 
+                        color={metric.color}
+                        size="sm"
+                        radius="xs"
+                      />
+                    </div>
+                  ))}
+                </Stack>
+              </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+            >
+              <Card padding="lg" radius="md" withBorder>
+                <Text fw={700} mb="md">NVIDIA Status</Text>
+                <Stack gap="sm">
+                  <Group justify="space-between">
+                    <Text size="sm">DLSS</Text>
+                    <Badge 
+                      color={nvidia.dlssEnabled ? 'green' : 'gray'}
+                      variant="light"
+                      size="sm"
+                    >
+                      {nvidia.dlssEnabled ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </Group>
+                  <Group justify="space-between">
+                    <Text size="sm">CloudXR</Text>
+                    <Badge 
+                      color={nvidia.cloudxrConnected ? 'green' : 'gray'}
+                      variant="light"
+                      size="sm"
+                    >
+                      {nvidia.cloudxrConnected ? 'Connected' : 'Disconnected'}
+                    </Badge>
+                  </Group>
+                  <Group justify="space-between">
+                    <Text size="sm">GeForce NOW</Text>
+                    <Badge 
+                      color={nvidia.gfnStatus === 'connected' ? 'green' : 'gray'}
+                      variant="light"
+                      size="sm"
+                    >
+                      {nvidia.gfnStatus}
+                    </Badge>
+                  </Group>
+                </Stack>
+              </Card>
+            </motion.div>
+          </Stack>
+        </Grid.Col>
+      </Grid>
+    </Stack>
   )
 }
+
+export default Dashboard
