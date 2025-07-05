@@ -3418,4 +3418,509 @@ The `TestSuite` component tests the entire stack:
 - **Vercel Deployment**: Configure `github/workflows/vercel.yml` for CI/CD after testing locally.
 - **Scalability**: The Docker Compose setup is for local testing. For production, use Kubernetes as noted in the README.
 
-If you need further customization (e.g., adding NVIDIA SDK tests, integrating Vercel AI SDK, or setting up CI/CD), let me know!
+---
+
+## Validation of Your Implementation
+
+Your implementation is thorough and well-structured, covering the backend (FastAPI), middleware (Rust), and frontend (React/TypeScript) with a comprehensive test suite. Below, I validate each section and highlight any areas for improvement or clarification.
+
+### 1. `TestSuite` Component (`frontend/src/components/TestSuite.tsx`)
+
+**Validation**:
+- **Completeness**: You've implemented all five test cases (Backend Health Check, Middleware Health Check, Redis Connection, JWT Authentication, and Proxy Integration) in the `runIndividualTest` function, addressing the initial gap where only the backend health check was implemented.
+- **Error Handling**: The use of `error.response?.data?.detail` for error messages is robust, providing detailed feedback when tests fail.
+- **UI/UX**: The Mantine-based UI with a progress bar, badges, and animated transitions (via Framer Motion) is user-friendly and visually appealing.
+- **Token Handling**: The static `generateTestToken` function is appropriate for testing but correctly noted as needing replacement with a proper auth service in production.
+
+**Suggestions/Optimizations**:
+- **Dynamic Token Generation**: For local testing, consider adding a mock auth endpoint (e.g., `/auth/token`) in the backend or middleware to generate temporary JWTs. This would make the test suite more realistic. Example:
+  ```tsx
+  const generateTestToken = async () => {
+    const response = await axios.post('http://localhost:8008/auth/token', {
+      username: 'test_user',
+      password: 'test_password',
+    });
+    return response.data.token;
+  };
+  ```
+  Corresponding middleware endpoint:
+  ```rust
+  #[post("/auth/token", data = "<body>")]
+  async fn generate_token(body: rocket::serde::json::Json<LoginRequest>) -> Result<String, status::Custom<String>> {
+      // Mock token generation logic
+      let claims = Claims {
+          sub: body.username.clone(),
+          exp: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp() as usize,
+      };
+      let key = env::var("JWT_SECRET").unwrap_or("super-secret-jwt-key-for-testing-min-32-chars".to_string());
+      let token = jsonwebtoken::encode(
+          &jsonwebtoken::Header::default(),
+          &claims,
+          &jsonwebtoken::EncodingKey::from_secret(key.as_ref()),
+      ).map_err(|e| status::Custom(Status::InternalServerError, e.to_string()))?;
+      Ok(token)
+  }
+  ```
+- **Test Timeout Configuration**: The 5000ms timeout in Axios requests is reasonable, but consider making it configurable via an environment variable or a UI input for flexibility in different environments.
+- **Test Retries**: Add a retry mechanism for flaky tests (e.g., network issues). Example:
+  ```tsx
+  const runIndividualTest = async (testIndex: number, retries = 2) => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        // Existing test logic
+        return await runTestCase(testIndex);
+      } catch (error: any) {
+        if (attempt === retries) throw error;
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
+  };
+  ```
+- **Test Reporting**: Save test results to a file (e.g., `test-results.json`) for CI/CD pipelines:
+  ```tsx
+  const saveTestResults = () => {
+    const fs = require('fs');
+    fs.writeFileSync('test-results.json', JSON.stringify(tests, null, 2));
+  };
+  useEffect(() => {
+    if (!isRunning && tests.every(t => t.status !== 'pending')) {
+      saveTestResults();
+    }
+  }, [isRunning, tests]);
+  ```
+
+### 2. Rust Middleware (`security/src/main.rs`)
+
+**Validation**:
+- **New Endpoints**: The addition of `/proxy/test/redis` and `/proxy/test/auth` correctly supports the test suite, testing Redis connectivity and JWT validation, respectively.
+- **Security**: Input sanitization in `proxy_create_repo` (checking for `<script` and `..`) is a good practice to prevent injection attacks.
+- **Redis Integration**: Caching responses for 60 seconds and testing Redis connectivity are well-implemented.
+- **Docker Compatibility**: Using `backend:8000` for internal Docker networking is correct and aligns with the `docker-compose.yml` setup.
+
+**Suggestions/Optimizations**:
+- **JWT Secret Management**: The fallback to a default `JWT_SECRET` is fine for testing but should be removed in production. Ensure the `.env` file is properly loaded:
+  ```rust
+  let key = env::var("JWT_SECRET").expect("JWT_SECRET must be set in .env");
+  ```
+- **Rate Limiting**: Add rate limiting to prevent abuse of test endpoints:
+  ```rust
+  use rocket::fairing::{Fairing, Info, Kind};
+  use rocket::http::Method;
+
+  struct RateLimiter;
+
+  #[rocket::async_trait]
+  impl Fairing for RateLimiter {
+      fn info(&self) -> Info {
+          Info {
+              name: "Rate Limiter",
+              kind: Kind::Request,
+          }
+      }
+
+      async fn on_request(&self, request: &mut Request<'_>, _: &mut ()) {
+          // Simple rate limiting logic (e.g., using Redis)
+          let key = format!("rate_limit:{}", request.client_ip().unwrap());
+          let mut redis_conn = request.rocket().state::<AppState>().unwrap().redis_client.get_async_connection().await.unwrap();
+          let count: i32 = redis_conn.get(&key).await.unwrap_or(0);
+          if count >= 100 { // Limit to 100 requests per minute
+              *request.local_cache(|| Status::TooManyRequests) = Status::TooManyRequests;
+          } else {
+              redis_conn.incr(&key, 1).await.unwrap();
+              redis_conn.expire(&key, 60).await.unwrap();
+          }
+      }
+  }
+  ```
+- **Logging**: Add structured logging (e.g., using `env_logger`) to track test endpoint usage:
+  ```rust
+  #[rocket::main]
+  async fn main() -> Result<(), rocket::Error> {
+      env_logger::init();
+      // Existing code
+  }
+  ```
+- **Test Endpoint Security**: Restrict `/proxy/test/*` endpoints to a specific environment (e.g., `TEST_ENV=true`) to prevent exposure in production:
+  ```rust
+  #[get("/proxy/test/redis")]
+  async fn test_redis(_user: AuthenticatedUser, state: &State<AppState>) -> Result<String, status::Custom<String>> {
+      if env::var("TEST_ENV").unwrap_or("false".to_string()) != "true" {
+          return Err(status::Custom(Status::Forbidden, "Test endpoints disabled in production".to_string()));
+      }
+      // Existing logic
+  }
+  ```
+
+### 3. Test Script (`test_omni_ai.sh`)
+
+**Validation**:
+- **Comprehensive Testing**: The script covers backend (`pytest`), middleware (`cargo test`), frontend (`npm test`), and integration tests (`curl`), ensuring all components are verified.
+- **Dependency Installation**: Installing dependencies before starting services is a good practice.
+- **Cleanup**: Properly shutting down Docker containers and removing the test directory prevents resource leaks.
+- **Error Handling**: The script exits on test failures with clear error messages.
+
+**Suggestions/Optimizations**:
+- **Parallel Testing**: Run backend, middleware, and frontend tests in parallel to reduce execution time:
+  ```bash
+  run_tests() {
+      print_status "Running tests in parallel..."
+      (
+          cd backend
+          source venv/bin/activate
+          pytest tests/test_api.py
+          deactivate
+      ) &
+      backend_pid=$!
+      
+      (
+          cd security
+          cargo test
+      ) &
+      middleware_pid=$!
+      
+      (
+          cd frontend
+          npm test
+      ) &
+      frontend_pid=$!
+      
+      wait $backend_pid $middleware_pid $frontend_pid
+      print_success "Unit tests completed."
+      
+      # Integration tests
+      print_status "Running integration tests..."
+      # Existing curl commands
+  }
+  ```
+- **Test Coverage Reports**: Generate coverage reports for each component:
+  - Backend: Add `pytest-cov` to `requirements.txt` and run `pytest --cov=src tests/`.
+  - Middleware: Use `cargo-tarpaulin` (`cargo install cargo-tarpaulin; cargo tarpaulin --out Html`).
+  - Frontend: Use `vitest` coverage (`npm test -- --coverage`).
+  ```bash
+  run_tests() {
+      print_status "Running tests with coverage..."
+      cd backend
+      source venv/bin/activate
+      pytest --cov=src tests/test_api.py
+      deactivate
+      cd ..
+      
+      cd security
+      cargo tarpaulin --out Html
+      cd ..
+      
+      cd frontend
+      npm test -- --coverage
+      cd ..
+      
+      # Integration tests
+      print_status "Running integration tests..."
+      # Existing curl commands
+  }
+  ```
+- **Docker Health Checks**: Add health checks to `docker-compose.yml` to ensure services are ready before running tests:
+  ```yaml
+  services:
+    redis:
+      healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 5s
+        timeout: 3s
+        retries: 5
+    postgres:
+      healthcheck:
+        test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
+        interval: 5s
+        timeout: 3s
+        retries: 5
+    backend:
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+        interval: 5s
+        timeout: 3s
+        retries: 5
+    security:
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:8008/health"]
+        interval: 5s
+        timeout: 3s
+        retries: 5
+  ```
+  Update the script to wait for healthy services:
+  ```bash
+  build_and_start() {
+      # Existing code
+      print_status "Waiting for services to be healthy..."
+      for service in redis postgres backend security frontend; do
+          until docker inspect --format='{{.State.Health.Status}}' $(docker-compose ps -q $service) | grep -q "healthy"; do
+              sleep 1
+          done
+      done
+      print_success "Services started and healthy."
+  }
+  ```
+
+### 4. Repository Structure (`init_omni_ai.sh`)
+
+**Validation**:
+- **Comprehensive README**: The README is detailed, covering prerequisites, installation, usage, and troubleshooting, making it easy for contributors to get started.
+- **Directory Structure**: The structure (`backend`, `frontend`, `security`, `tests`, `nvidia_sdks`) aligns with the OmniAI architecture.
+- **Git Integration**: Initializing a Git repository with a commit and remote setup is a good practice.
+- **Dependency Attribution**: The `NOTICE` file correctly lists open-source and proprietary dependencies.
+
+**Suggestions/Optimizations**:
+- **GitHub Actions**: Add a CI/CD workflow for automated testing:
+  ```yaml
+  # .github/workflows/ci.yml
+  name: OmniAI CI
+  on:
+    push:
+      branches: [main]
+    pull_request:
+      branches: [main]
+  jobs:
+    test:
+      runs-on: ubuntu-latest
+      services:
+        redis:
+          image: redis:7.0
+          ports: ["6379:6379"]
+        postgres:
+          image: postgres:16
+          env:
+            POSTGRES_USER: omni
+            POSTGRES_PASSWORD: testpassword
+            POSTGRES_DB: omni_test
+          ports: ["5432:5432"]
+      steps:
+        - uses: actions/checkout@v4
+        - name: Set up Python
+          uses: actions/setup-python@v5
+          with: { python-version: "3.12" }
+        - name: Set up Node.js
+          uses: actions/setup-node@v4
+          with: { node-version: "20" }
+        - name: Set up Rust
+          uses: actions-rs/toolchain@v1
+          with: { toolchain: stable }
+        - name: Install dependencies
+          run: |
+            cd backend
+            python -m venv venv
+            source venv/bin/activate
+            pip install -r requirements.txt
+            cd ../frontend
+            npm install
+            cd ../security
+            cargo build --release
+        - name: Run tests
+          run: ./test_omni_ai.sh
+          env:
+            REDIS_URL: redis://localhost:6379/0
+            POSTGRES_URL: postgresql://omni:testpassword@localhost:5432/omni_test
+            JWT_SECRET: super-secret-jwt-key-for-testing-min-32-chars
+  ```
+- **.env.example**: Create an `.env.example` file to guide users:
+  ```bash
+  cat << 'EOF' > $REPO_DIR/.env.example
+  REDIS_URL=redis://redis:6379/0
+  POSTGRES_URL=postgresql://omni:your-secure-password@postgres:5432/omni
+  POSTGRES_USER=omni
+  POSTGRES_PASSWORD=your-secure-password
+  POSTGRES_DB=omni
+  JWT_SECRET=your-super-secret-jwt-key-min-32-chars
+  ENCRYPTION_KEY=your-32-byte-encryption-key
+  NVIDIA_DEVELOPER_API_KEY=your-nvidia-developer-key
+  GEFORCE_NOW_API_KEY=your-gfn-api-key
+  CLOUDXR_LICENSE_KEY=your-cloudxr-license
+  PINECONE_API_KEY=your-pinecone-api-key
+  PINECONE_ENVIRONMENT=us-west1-gcp
+  OPENAI_API_KEY=your-openai-api-key
+  GITHUB_TOKEN=your-github-personal-access-token
+  VERCEL_TOKEN=your-vercel-api-token
+  VERCEL_ORG_ID=your-vercel-org-id
+  VERCEL_PROJECT_ID=your-vercel-project-id
+  UPLOAD_DIRECTORY=/app/uploads
+  MAX_FILE_SIZE=104857600
+  EOF
+  ```
+- **NVIDIA SDK Integration**: Add placeholder files or scripts in `nvidia_sdks/` to guide users on downloading and integrating proprietary SDKs:
+  ```bash
+  cat << 'EOF' > $REPO_DIR/nvidia_sdks/README.md
+  # NVIDIA SDKs
+
+  This directory is reserved for NVIDIA SDKs (GeForce NOW, CloudXR, DLSS). Due to proprietary licensing, you must download these SDKs from the [NVIDIA Developer Portal](https://developer.nvidia.com/).
+
+  ## Setup Instructions
+  1. **GeForce NOW SDK**:
+     - Clone `https://github.com/NVIDIAGameWorks/GeForceNOW-SDK.git` into `nvidia_sdks/gfn_sdk`.
+     - Follow the setup guide: [GeForce NOW SDK](https://developer.nvidia.com/geforce-now).
+  2. **CloudXR SDK**:
+     - Download from [NVIDIA Developer Portal](https://developer.nvidia.com/cloudxr-sdk).
+     - Extract to `nvidia_sdks/cloudxr_sdk`.
+     - Follow [CloudXR Guide](https://docs.nvidia.com/cloudxr-sdk/).
+  3. **DLSS SDK**:
+     - Clone `https://github.com/NVIDIA/DLSS.git` into `nvidia_sdks/dlss_sdk` or download from [NVIDIA Developer Portal](https://developer.nvidia.com/rtx/dlss).
+     - For Unreal Engine, install via [Unreal Marketplace](https://www.unrealengine.com/marketplace/en-US/product/nvidia-dlss).
+  4. Configure API keys in `.env`:
+     ```
+     NVIDIA_DEVELOPER_API_KEY=your-nvidia-developer-key
+     GEFORCE_NOW_API_KEY=your-gfn-api-key
+     CLOUDXR_LICENSE_KEY=your-cloudxr-license
+     ```
+
+  ## Testing
+  Add SDK-specific tests in `tests/nvidia_tests/` after setup.
+  EOF
+  ```
+
+---
+
+## Instructions for Running Tests
+
+You've already provided detailed instructions in the `README.md` and `test_omni_ai.sh`. Here's a consolidated version for clarity:
+
+1. **Clone and Initialize**:
+   ```bash
+   git clone https://github.com/CreoDAMO/OmniAI.git
+   cd OmniAI
+   ./init_omni_ai.sh
+   cp .env.example .env
+   ```
+   Edit `.env` with your API keys or use the test keys for local testing.
+
+2. **Run the Test Suite**:
+   ```bash
+   ./test_omni_ai.sh
+   ```
+   This runs unit tests for backend, middleware, frontend, and integration tests via `curl`.
+
+3. **View Frontend Test Suite**:
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+   Open `http://localhost:3000` and click "Run All Tests" in the `TestSuite` component.
+
+4. **Troubleshooting**:
+   - **Service Not Starting**: Check `docker ps` and logs (`docker-compose logs <service>`).
+   - **Test Failures**: Review error messages in the terminal or browser UI. Common issues:
+     - Incorrect `JWT_SECRET` in `.env`.
+     - Redis/PostgreSQL connectivity issues (verify `REDIS_URL`, `POSTGRES_URL`).
+     - Network issues (ensure ports 3000, 8000, 8008 are free).
+
+---
+
+## Next Steps and Enhancements
+
+1. **NVIDIA SDK Tests**:
+   - Once NVIDIA SDKs are integrated, add specific tests in `tests/nvidia_tests/`. Example for GeForce NOW:
+     ```python
+     # backend/tests/test_nvidia.py
+     import pytest
+     from src.services.nvidia import GeForceNOWClient
+
+     @pytest.mark.asyncio
+     async def test_gfn_connect():
+         client = GeForceNOWClient(api_key=os.getenv("GEFORCE_NOW_API_KEY"))
+         status = await client.check_status()
+         assert status["connected"] == True
+     ```
+   - Mock NVIDIA APIs for local testing to avoid proprietary dependencies.
+
+2. **Vercel AI SDK Integration**:
+   - Add a service in `backend/src/services/ai.py` to use the Vercel AI SDK for generating project configurations:
+     ```python
+     from vercel_ai import Client
+     import os
+
+     class AIConfigService:
+         def __init__(self):
+             self.client = Client(api_key=os.getenv("OPENAI_API_KEY"))
+
+         async def generate_config(self, project_type: str, repo_name: str) -> dict:
+             prompt = f"Generate a {project_type} configuration for a repository named {repo_name}"
+             response = await self.client.generate(prompt)
+             return {"config": response.text, "repo_name": repo_name}
+     ```
+   - Update `AIConfigurator.tsx` to call this endpoint.
+
+3. **Production Deployment**:
+   - Configure Kubernetes manifests for production:
+     ```yaml
+     # kubernetes/backend-deployment.yaml
+     apiVersion: apps/v1
+     kind: Deployment
+     metadata:
+       name: omni-ai-backend
+     spec:
+       replicas: 3
+       selector:
+         matchLabels:
+           app: omni-ai-backend
+       template:
+         metadata:
+           labels:
+             app: omni-ai-backend
+         spec:
+           containers:
+           - name: backend
+             image: omni-ai-backend:latest
+             ports:
+             - containerPort: 8000
+             envFrom:
+             - configMapRef:
+                 name: omni-ai-config
+             - secretRef:
+                 name: omni-ai-secrets
+     ```
+   - Set up Vercel for frontend deployment:
+     ```bash
+     cd frontend
+     vercel deploy --prod
+     ```
+
+4. **Security Hardening**:
+   - Implement OAuth2 with GitHub for authentication.
+   - Use a secret management service (e.g., AWS Secrets Manager, HashiCorp Vault) instead of `.env` files.
+   - Add input validation in the backend for all endpoints using Pydantic.
+
+5. **Monitoring and Logging**:
+   - Integrate a logging solution (e.g., Prometheus for metrics, ELK for logs).
+   - Add health endpoints with more detailed metrics (e.g., Redis connection pool size, request latency).
+
+---
+
+## Clarifications and Assumptions
+
+- **JWT Token**: The static token (`test-jwt-token-for-demo`) is used for simplicity. In production, integrate with an identity provider (e.g., Auth0, Firebase).
+- **NVIDIA SDKs**: The test suite doesn't cover NVIDIA SDKs due to their proprietary nature. I've suggested placeholder files for guidance.
+- **Database Initialization**: The backend assumes a PostgreSQL database but doesn't include an `init_db` function. Add one in `backend/src/core/config.py`:
+  ```python
+  import asyncpg
+  import os
+
+  async def init_db():
+      conn = await asyncpg.connect(os.getenv("POSTGRES_URL"))
+      await conn.execute("""
+          CREATE TABLE IF NOT EXISTS repositories (
+              id SERIAL PRIMARY KEY,
+              repo_name VARCHAR(255) NOT NULL,
+              created_by VARCHAR(255),
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )
+      """)
+      await conn.close()
+  ```
+- **Vercel AI SDK**: Not fully integrated in the test suite. Add it to `backend/src/services/ai.py` as suggested above.
+
+---
+
+## Conclusion
+
+Your implementation is robust, with a complete test suite, enhanced test script, and a well-structured repository. The suggestions provided (e.g., dynamic token generation, rate limiting, parallel testing, CI/CD) are optional enhancements to make the stack production-ready. To proceed:
+
+1. Run the test suite locally using `./test_omni_ai.sh`.
+2. Verify the frontend UI at `http://localhost:3000`.
+3. Implement suggested optimizations based on your needs (e.g., NVIDIA SDK tests, Vercel AI SDK integration).
+4. Push changes to `https://github.com/CreoDAMO/OmniAI` and set up CI/CD.
